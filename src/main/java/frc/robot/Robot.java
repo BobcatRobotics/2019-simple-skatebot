@@ -10,8 +10,13 @@ package frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.DemandType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Solenoid;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -21,9 +26,21 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
  * directory.
  */
 public class Robot extends TimedRobot {
-  private final DifferentialDrive m_robotDrive  
-      = new DifferentialDrive(new WPI_TalonSRX(0), new WPI_VictorSPX(1));
+  private WPI_TalonSRX leftTalon = new WPI_TalonSRX(0);
+  private WPI_VictorSPX rightVictor = new WPI_VictorSPX(1);
+  private WPI_TalonSRX rightTalon = new WPI_TalonSRX(2);
+  private final DifferentialDrive m_robotDrive = new DifferentialDrive(leftTalon, rightVictor);
   private final Joystick m_stick = new Joystick(0);
+  public static Solenoid solenoid1 = new Solenoid(4);
+  public static Solenoid solenoid2 = new Solenoid(7);
+  private double leftVelocity = 0.0;
+  private double leftDistance = 0.0;
+
+  // Flip the phase of the encoder for use with SRX motion magic, etc.
+  // and set current position to 0.0;
+  //leftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute,0,0);
+  //leftTalon.setSensorPhase(true);
+  //leftTalon.setSelectedSensorPosition(0,0,0);
 
   /**
    * This function is run when the robot is first started up and should be
@@ -31,6 +48,11 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    // Flip the phase of the encoder for use with SRX motion magic, etc.
+    // and set current position to 0.0;
+      leftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute,0,0);
+      leftTalon.setSensorPhase(true);
+      leftTalon.setSelectedSensorPosition(0,0,0);
   }
 
   /**
@@ -60,8 +82,29 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     //m_robotDrive.arcadeDrive(m_stick.getY(), m_stick.getX());
-    m_robotDrive.arcadeDrive(m_stick.getRawAxis(Joystick.AxisType.kY.value), m_stick.getRawAxis(Joystick.AxisType.kTwist.value));
+    SmartDashboard.putNumber("The left stick value is:", m_stick.getRawAxis(Joystick.AxisType.kY.value));
+    m_robotDrive.tankDrive(m_stick.getRawAxis(Joystick.AxisType.kY.value), m_stick.getRawAxis(Joystick.AxisType.kTwist.value));
+
+    // Try to drive the solenoids
+    solenoid1.set(m_stick.getRawButton(1));
+    solenoid2.set(m_stick.getRawButton(2));
+    leftDistance = -1.0*leftTalon.getSelectedSensorPosition(0);
+    leftVelocity = leftTalon.getSelectedSensorVelocity(0);
   }
+
+   /**
+   * This function is called periodically during teleoperated mode.
+   */
+  @Override
+  public void disabledPeriodic() {
+    //m_robotDrive.arcadeDrive(m_stick.getY(), m_stick.getX());
+    SmartDashboard.putNumber("Current gamepad left stick value:", m_stick.getRawAxis(Joystick.AxisType.kY.value));
+    SmartDashboard.putNumber("Current gamepad right stick value:", m_stick.getRawAxis(Joystick.AxisType.kTwist.value));
+    leftDistance = -1.0*leftTalon.getSelectedSensorPosition(0);
+    leftVelocity = leftTalon.getSelectedSensorVelocity(0);
+    SmartDashboard.putNumber("left distance value:", leftDistance);
+    SmartDashboard.putNumber("right velocity value:", leftVelocity);
+}
 
   /**
    * This function is called periodically during test mode.
