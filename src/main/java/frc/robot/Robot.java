@@ -29,12 +29,13 @@ public class Robot extends TimedRobot {
   private WPI_TalonSRX leftTalon = new WPI_TalonSRX(0);
   private WPI_VictorSPX rightVictor = new WPI_VictorSPX(1);
   private WPI_TalonSRX rightTalon = new WPI_TalonSRX(2);
+  private WPI_TalonSRX pingPongTalon = new WPI_TalonSRX(8);
   private final DifferentialDrive m_robotDrive = new DifferentialDrive(leftTalon, rightVictor);
   private final Joystick m_stick = new Joystick(0);
-  public static Solenoid solenoid1 = new Solenoid(4);
-  public static Solenoid solenoid2 = new Solenoid(7);
+  public static Solenoid solenoid1 = new Solenoid(7);
   private double leftVelocity = 0.0;
   private double leftDistance = 0.0;
+  private double rightDistance = 0.0;
 
   // Flip the phase of the encoder for use with SRX motion magic, etc.
   // and set current position to 0.0;
@@ -51,8 +52,12 @@ public class Robot extends TimedRobot {
     // Flip the phase of the encoder for use with SRX motion magic, etc.
     // and set current position to 0.0;
       leftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute,0,0);
-      leftTalon.setSensorPhase(true);
+      leftTalon.setSensorPhase(false);
       leftTalon.setSelectedSensorPosition(0,0,0);
+
+      rightTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute,0,0);
+      rightTalon.setSensorPhase(true);
+      rightTalon.setSelectedSensorPosition(0,0,0);
   }
 
   /**
@@ -86,10 +91,20 @@ public class Robot extends TimedRobot {
     m_robotDrive.tankDrive(m_stick.getRawAxis(Joystick.AxisType.kY.value), m_stick.getRawAxis(Joystick.AxisType.kTwist.value));
 
     // Try to drive the solenoids
-    solenoid1.set(m_stick.getRawButton(1));
-    solenoid2.set(m_stick.getRawButton(2));
+    solenoid1.set(m_stick.getRawButton(2));
     leftDistance = -1.0*leftTalon.getSelectedSensorPosition(0);
+    rightDistance = -1.0*rightTalon.getSelectedSensorPosition(0);
+    SmartDashboard.putNumber("left distance value:", leftDistance);
+    SmartDashboard.putNumber("right distance value:", rightDistance);
     leftVelocity = leftTalon.getSelectedSensorVelocity(0);
+
+    // Drive ping pong ball shooter when button 8 is pressed
+    if (m_stick.getRawButton(8)) {
+      pingPongTalon.set(-1.0);
+    }
+    else {
+      pingPongTalon.set(0.0);
+    }
   }
 
    /**
@@ -101,9 +116,11 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Current gamepad left stick value:", m_stick.getRawAxis(Joystick.AxisType.kY.value));
     SmartDashboard.putNumber("Current gamepad right stick value:", m_stick.getRawAxis(Joystick.AxisType.kTwist.value));
     leftDistance = -1.0*leftTalon.getSelectedSensorPosition(0);
+    rightDistance = -1.0*rightTalon.getSelectedSensorPosition(0);
     leftVelocity = leftTalon.getSelectedSensorVelocity(0);
     SmartDashboard.putNumber("left distance value:", leftDistance);
-    SmartDashboard.putNumber("right velocity value:", leftVelocity);
+    SmartDashboard.putNumber("right distance value:", rightDistance);
+    SmartDashboard.putNumber("left velocity value:", leftVelocity);
 }
 
   /**
